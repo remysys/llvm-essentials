@@ -2,20 +2,15 @@
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Verifier.h"
-#include <vector>
 using namespace llvm;
 
 static LLVMContext TheContext;
-static LLVMContext &getGlobalContext()
-{
-  return TheContext;
-}
+static LLVMContext &getGlobalContext() { return TheContext; }
 static LLVMContext &Context = getGlobalContext();
 static Module *ModuleOb = new Module("toy compiler", Context);
 static std::vector<std::string> FunArgs;
 
-Function *createFunc(IRBuilder<> &Builder, std::string Name)
-{
+Function *createFunc(IRBuilder<> &Builder, std::string Name) {
   Type *u32Ty = Type::getInt32Ty(Context);
   Type *vecTy = VectorType::get(u32Ty, 2, false);
   Type *ptrTy = vecTy->getPointerTo(0);
@@ -24,40 +19,27 @@ Function *createFunc(IRBuilder<> &Builder, std::string Name)
   return fooFunc;
 }
 
-void setFuncArgs(Function *fooFunc, std::vector<std::string> FunArgs)
-{
+void setFuncArgs(Function *fooFunc, std::vector<std::string> FunArgs) {
   unsigned Idx = 0;
   Function::arg_iterator AI, AE;
-  for (AI = fooFunc->arg_begin(), AE = fooFunc->arg_end(); AI != AE; ++AI, ++Idx)
-    AI->setName(FunArgs[Idx]);
+  for (AI = fooFunc->arg_begin(), AE = fooFunc->arg_end(); AI != AE; ++AI, ++Idx) AI->setName(FunArgs[Idx]);
 }
 
-BasicBlock *createBB(Function *fooFunc, std::string Name)
-{
-  return BasicBlock::Create(Context, Name, fooFunc);
+BasicBlock *createBB(Function *fooFunc, std::string Name) { return BasicBlock::Create(Context, Name, fooFunc); }
+
+Value *createArith(IRBuilder<> &Builder, Value *L, Value *R) { return Builder.CreateMul(L, R, "multmp"); }
+
+Value *getGEP(IRBuilder<> &Builder, Value *Base, Value *Offset) {
+  return Builder.CreateGEP(Builder.getInt32Ty(), Base, Offset, "a1");
 }
 
-Value *createArith(IRBuilder<> &Builder, Value *L, Value *R) {
-  return Builder.CreateMul(L, R, "multmp");
+Value *getLoad(IRBuilder<> &Builder, Value *Address) {
+  return Builder.CreateLoad(Builder.getInt32Ty(), Address, "load");
 }
 
-Value *getGEP(IRBuilder<> &Builder, Value *Base, ArrayRef<Value *> Offset)
-{
-  return Builder.CreateGEP(Base, Offset, "a1");
-}
+void getStore(IRBuilder<> &Builder, Value *Address, Value *V) { Builder.CreateStore(V, Address); }
 
-Value *getLoad(IRBuilder<> &Builder, Value *Address)
-{
-  return Builder.CreateLoad(Address, "load");
-}
-
-void getStore(IRBuilder<> &Builder, Value *Address, Value *V) 
-{
-  Builder.CreateStore(V, Address);
-}
-
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
   FunArgs.push_back("a");
   static IRBuilder<> Builder(Context);
   Function *fooFunc = createFunc(Builder, "foo");
@@ -65,7 +47,7 @@ int main(int argc, char *argv[])
   Value *Base = fooFunc->arg_begin();
   BasicBlock *entry = createBB(fooFunc, "entry");
   Builder.SetInsertPoint(entry);
-  Value *gep = getGEP(Builder, Base, {Builder.getInt32(0), Builder.getInt32(1)});
+  Value *gep = getGEP(Builder, Base, Builder.getInt32(1));
   Value *load = getLoad(Builder, gep);
   Value *constant = Builder.getInt32(16);
   Value *val = createArith(Builder, load, constant);
