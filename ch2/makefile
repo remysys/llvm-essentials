@@ -26,7 +26,7 @@ arithmetic:
 ifelse:
 	clang++ -O3 ifelse.cpp `llvm-config --cxxflags --ldflags --system-libs --libs core` -o ifelse
 
-ifelse:
+loop:
 	clang++ -O3 loop.cpp `llvm-config --cxxflags --ldflags --system-libs --libs core` -o loop
 
 clean:
